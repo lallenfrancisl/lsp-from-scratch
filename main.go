@@ -126,6 +126,23 @@ func handleMessage(
 			)
 			writeMessage(writer, response)
 		}
+	} else if method == "textDocument/codeAction" {
+		var request lsp.TextDocumentCodeActionRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			logger.Printf("textDocument/codeAction: %s", err)
+		} else {
+			logger.Printf(
+				"CodeAction: %s",
+				request.Params.TextDocument.URI,
+			)
+
+			response := state.CodeAction(
+				request.ID,
+				request.Params.TextDocument.URI,
+				request.Params.Range,
+			)
+			writeMessage(writer, response)
+		}
 	}
 }
 

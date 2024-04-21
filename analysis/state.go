@@ -2,6 +2,7 @@ package analysis
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/lallenfrancisl/lsp-from-scratch/lsp"
 )
@@ -67,4 +68,48 @@ func (s *State) Definition(
 			},
 		},
 	}
+}
+
+func (s *State) CodeAction(
+	id int, uri string, selectedRange lsp.Range,
+) lsp.TextDocumentCodeActionResponse {
+	document := s.Documents[uri]
+	var response lsp.TextDocumentCodeActionResponse
+
+	lines := strings.Split(document, "\n")
+	line := lines[selectedRange.Start.Line]
+
+	changes := map[string][]lsp.TextEdit{}
+	changes[uri] = []lsp.TextEdit{
+		{
+			Range: lsp.Range{
+				Start: lsp.Position{
+					Line: selectedRange.Start.Line,
+					Character: 0,
+				},
+				End: lsp.Position{
+					Line: selectedRange.Start.Line,
+					Character: len(line),
+				},
+			},
+			NewText: strings.ToUpper(line),
+		},
+	}
+
+	response = lsp.TextDocumentCodeActionResponse{
+		Response: lsp.Response{
+			RPC: "2.0",
+			ID:  &id,
+		},
+		Result: []lsp.CodeAction{
+			{
+				Title: "Change line to uppercase",
+				Edit: &lsp.WorkspaceEdit{
+					Changes: changes,
+				},
+			},
+		},
+	}
+
+	return response
 }
