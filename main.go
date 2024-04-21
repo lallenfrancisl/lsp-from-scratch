@@ -2,14 +2,16 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"log"
 	"os"
 
+	"github.com/lallenfrancisl/lsp-from-scratch/lsp"
 	"github.com/lallenfrancisl/lsp-from-scratch/rpc"
 )
 
 func main() {
-	logger := getLogger("/home/allen/projekts/lsp-from-scratch/git/log.txt")
+	logger := getLogger("/home/allen/projekts/lsp-from-scratch/gitignored/log.txt")
 	logger.Println("LSP started")
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -31,6 +33,30 @@ func main() {
 
 func handleMessage(logger *log.Logger, method string, contents []byte) {
 	logger.Printf("Received msg with method: %s\n", method)
+
+	if method == "initialize" {
+		var request lsp.InitialiseRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			logger.Printf("Couldn't parse the initialise request: %s", err)
+		} else {
+			logger.Printf(
+				"Received message with method: %s",
+				request.Method,
+			)
+			logger.Printf(
+				"Connected to %s, version %s",
+				request.Params.ClientInfo.Name,
+				request.Params.ClientInfo.Version,
+			)
+
+			msg := lsp.NewInitialiseResponse(request.ID)
+			reply := rpc.EncodeMessage(msg)
+
+			writer := os.Stdout
+			writer.Write([]byte(reply))
+			logger.Println("Sent initialise reply")
+		}
+	}
 }
 
 func getLogger(filename string) *log.Logger {
